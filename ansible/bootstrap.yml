@@ -1,0 +1,76 @@
+---
+- name: Bootstrap Development Environment
+  hosts: localhost
+  become: true
+  gather_facts: true
+
+  vars_prompt:
+    - name: install_nodejs
+      prompt: "Do you want to install Node.js? ([y]/n)"
+      private: false
+      default: y 
+    - name: install_zsh
+      prompt: "Do you want to install Zsh? ([y]/n)"
+      private: false 
+      default: y 
+    - name: install_tmux
+      prompt: "Do you want to install Tmux (Oh-My-Tmux)? ([y]/n)"
+      private: false 
+      default: y 
+    - name: install_docker
+      prompt: "Do you want to install Docker? (y/[n])"
+      private: false
+      default: n 
+    - name: install_r
+      prompt: "Do you want to install R? (y/[n])"
+      private: false
+      default: n 
+    - name: install_go
+      prompt: "Do you want to install Go? (y/[n])"
+      private: false
+      default: n 
+    - name: install_cargo
+      prompt: "Do you want to install Cargo? (y/[n])"
+      private: false
+      default: n 
+    - name: install_k3s
+      prompt: "Do you want to install K3s? (y/[n])"
+      private: false
+      default: n 
+
+  tasks:
+    - name: Generate Ansible Galaxy requirements file
+      copy:
+        dest: "/tmp/requirements.yml"
+        content: |
+          ---
+          roles:
+            {% if install_nodejs == 'y' %} - name: geerlingguy.nodejs {% endif %}
+            {% if install_docker == 'y' %} - name: geerlingguy.docker {% endif %}
+            {% if install_go == 'y' %} - name: geerlingguy.go {% endif %}
+            {% if install_zsh == 'y' %} - name: viasite-ansible.zsh {% endif %}
+            {% if install_cargo == 'y' %} - name: robertdebock.cargo {% endif %}
+            {% if install_k3s == 'y' %} - name: xanmanning.k3s {% endif %}
+
+    - name: Install Ansible Galaxy roles from requirements file
+      community.general.ansible_galaxy:
+        type: role
+        requirements_file: "/tmp/requirements.yml"
+      register: galaxy_install
+
+    - name: Print installed roles
+      debug:
+        var: galaxy_install
+
+  roles:
+    - { role: neovim }
+    - { role: wsl_clipboard_support }
+    - { role: geerlingguy.nodejs, when: install_nodejs == 'y' }
+    - { role: tmux, when: install_tmux == 'y' }
+    - { role: viasite-ansible.zsh, when: install_zsh == 'y' }
+    - { role: geerlingguy.go, when: install_go == 'y' }
+    - { role: robertdebock.cargo, when: install_cargo == 'y' }
+    - { role: geerlingguy.docker, when: install_docker == 'y' }
+    - { role: xanmanning.k3s, when: install_k3s == 'y' }
+    - { role: conda, when: install_conda == 'y' }
+    - { role: r, when: install_r == 'y' }

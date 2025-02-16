@@ -1,0 +1,42 @@
+---
+
+- name: Check if Miniforge3 is installed
+  stat:
+    path: "{{ ansible_env.HOME }}/miniforge3"
+  register: miniforge_stat
+
+- name: Download Miniforge3
+  get_url:
+    url: "{{ conda_installer_url }}/{{ conda_installer_script }}"
+    dest: /tmp/miniforge3.sh
+    mode: '0644'
+  when: not miniforge_stat.exists
+
+- name: Install Miniforge3
+  command: /tmp/miniforge3.sh -b -p {{ ansible_env.HOME }}/miniforge3
+  when: not miniforge_stat.exists
+  changed_when: true
+
+- name: Check if zshrc exists
+  stat:
+    path: "~/.zshrc"
+  register: zshrc_stat
+
+- name: Add Miniforge3 to PATH in zshrc (if zsh is installed)
+  lineinfile:
+    path: "{{ ansible_env.HOME }}/.zshrc"
+    line: 'export PATH="{{ ansible_env.HOME }}/miniforge3/bin:$PATH"'
+    create: true
+  when: zshrc_stat.exists
+
+- name: Check if bashrc exists
+  stat:
+    path: "~/.bashrc"
+  register: bashrc_stat
+
+- name: Add Miniforge3 to PATH in bashrc (fallback if no Zsh)
+  lineinfile:
+    path: "{{ ansible_env.HOME }}/.bashrc"
+    line: 'export PATH="{{ ansible_env.HOME }}/miniforge3/bin:$PATH"'
+    create: true
+  when: bash_stat.exists

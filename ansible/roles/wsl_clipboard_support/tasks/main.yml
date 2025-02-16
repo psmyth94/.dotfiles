@@ -1,0 +1,31 @@
+---
+- name: Detect if running on WSL
+  ansible.builtin.command: cat /proc/version
+  register: wsl_version
+  changed_when: false
+  failed_when: false
+
+- name: Set is_wsl fact
+  ansible.builtin.set_fact:
+    is_wsl: "{{ ('microsoft' in wsl_version.stdout | lower) or ('wsl' in wsl_version.stdout | lower) }}"
+  changed_when: false
+
+- name: Check if win32yank is already installed
+  ansible.builtin.stat:
+    path: /usr/local/bin/win32yank.exe
+  register: win32yank_stat
+  when: is_wsl
+
+- name: Download and install win32yank
+  ansible.builtin.unarchive:
+    src: "https://github.com/equalsraf/win32yank/releases/download/v0.0.4/win32yank-x64.zip"
+    dest: "/tmp"
+    remote_src: true
+    creates: "/tmp/win32yank.exe"
+  when: is_wsl and (not win32yank_stat.exists)
+
+- name: Move win32yank into /usr/local/bin
+  ansible.builtin.command: mv /tmp/win32yank.exe /usr/local/bin/win32yank.exe
+  args:
+    creates: /usr/local/bin/win32yank.exe
+  when: is_wsl and (not win32yank_stat.exists)

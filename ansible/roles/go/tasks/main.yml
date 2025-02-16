@@ -1,0 +1,14 @@
+---
+- name: Add golang-backports PPA
+  ansible.builtin.apt_repository:
+    repo: "ppa:longsleep/golang-backports"
+    state: present
+  when:
+    - ansible_os_family == "Debian"
+    - use_golang_backports_ppa | bool
+
+- name: Install golang-go
+  ansible.builtin.apt:
+    name: golang-go
+    state: present
+  when: ansible_os_family == "Debian"

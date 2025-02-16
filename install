@@ -1,0 +1,4 @@
+#!/usr/bin/env bash
+
+cd ansible
+ansible-playbook bootstrap.yml --ask-become-pass

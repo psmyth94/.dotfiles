@@ -1,0 +1,6 @@
+---
+- name: Install R base (Ubuntu/Debian)
+  ansible.builtin.apt:
+    name: r-base
+    state: present
+  when: ansible_os_family == "Debian"
