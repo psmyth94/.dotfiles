@@ -29,6 +29,3 @@ ansible/secrets.yml
 *.err
 debug/
 
-# Ansible Roles & Collections (if installed via ansible-galaxy)
-ansible/roles/
-ansible/collections/
