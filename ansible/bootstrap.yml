@@ -1,76 +1,173 @@
 ---
 - name: Bootstrap Development Environment
   hosts: localhost
-  become: true
   gather_facts: true
+  become: true
 
   vars_prompt:
+    - name: default_zsh
+      prompt: "Do you want to make Zsh the default shell ([y]/n)"
+      private: false
+      default: y
+    - name: install_zsh
+      prompt: "Do you want to install Oh-My-Zsh? ([y]/n)"
+      private: false
+      default: y
     - name: install_nodejs
       prompt: "Do you want to install Node.js? ([y]/n)"
       private: false
-      default: y 
-    - name: install_zsh
-      prompt: "Do you want to install Zsh? ([y]/n)"
-      private: false 
-      default: y 
+      default: y
     - name: install_tmux
       prompt: "Do you want to install Tmux (Oh-My-Tmux)? ([y]/n)"
-      private: false 
-      default: y 
+      private: false
+      default: y
     - name: install_docker
       prompt: "Do you want to install Docker? (y/[n])"
       private: false
-      default: n 
+      default: n
     - name: install_r
       prompt: "Do you want to install R? (y/[n])"
       private: false
-      default: n 
+      default: n
     - name: install_go
       prompt: "Do you want to install Go? (y/[n])"
       private: false
-      default: n 
+      default: n
     - name: install_cargo
       prompt: "Do you want to install Cargo? (y/[n])"
       private: false
-      default: n 
+      default: n
     - name: install_k3s
       prompt: "Do you want to install K3s? (y/[n])"
       private: false
-      default: n 
-
+      default: n
+    - name: install_conda
+      prompt: "Do you want to install Conda? (y/[n])"
+      private: false
+      default: n
+  vars:
+    default_shell: "{{ lookup('ansible.builtin.env', 'SHELL') }}"
   tasks:
-    - name: Generate Ansible Galaxy requirements file
-      copy:
-        dest: "/tmp/requirements.yml"
-        content: |
-          ---
-          roles:
-            {% if install_nodejs == 'y' %} - name: geerlingguy.nodejs {% endif %}
-            {% if install_docker == 'y' %} - name: geerlingguy.docker {% endif %}
-            {% if install_go == 'y' %} - name: geerlingguy.go {% endif %}
-            {% if install_zsh == 'y' %} - name: viasite-ansible.zsh {% endif %}
-            {% if install_cargo == 'y' %} - name: robertdebock.cargo {% endif %}
-            {% if install_k3s == 'y' %} - name: xanmanning.k3s {% endif %}
-
-    - name: Install Ansible Galaxy roles from requirements file
-      community.general.ansible_galaxy:
+    # DO NOT TOUCH THIS. YOU WANT IT EXACTLY AS IS.
+    - name: Install geerlingguy.docker
+      community.general.ansible_galaxy_install:
         type: role
-        requirements_file: "/tmp/requirements.yml"
-      register: galaxy_install
+        name: "geerlingguy.docker"
+        dest: "{{ ansible_env.HOME }}/.ansible/roles"
+        force: true
+      when: install_docker == 'y'
+      become: false
 
-    - name: Print installed roles
-      debug:
-        var: galaxy_install
+    - name: Install geerlingguy.nodejs
+      community.general.ansible_galaxy_install:
+        type: role
+        name: geerlingguy.nodejs
+        dest: "{{ ansible_env.HOME }}/.ansible/roles"
+        force: true
+      when: install_nodejs == 'y'
+      become: false
 
-  roles:
-    - { role: neovim }
-    - { role: wsl_clipboard_support }
-    - { role: geerlingguy.nodejs, when: install_nodejs == 'y' }
-    - { role: tmux, when: install_tmux == 'y' }
-    - { role: viasite-ansible.zsh, when: install_zsh == 'y' }
-    - { role: geerlingguy.go, when: install_go == 'y' }
-    - { role: robertdebock.cargo, when: install_cargo == 'y' }
-    - { role: geerlingguy.docker, when: install_docker == 'y' }
-    - { role: xanmanning.k3s, when: install_k3s == 'y' }
-    - { role: conda, when: install_conda == 'y' }
-    - { role: r, when: install_r == 'y' }
+    - name: Install geerlingguy.go
+      community.general.ansible_galaxy_install:
+        type: role
+        name: geerlingguy.go
+        dest: ~/.ansible/roles
+        force: true
+      when: install_go == 'y'
+      become: false
+
+    - name: Install viasite-ansible.zsh
+      community.general.ansible_galaxy_install:
+        type: role
+        name: viasite-ansible.zsh
+        dest: "{{ ansible_env.HOME }}/.ansible/roles"
+        force: true
+      when: install_zsh == 'y'
+
+    - name: Install robertdebock.cargo
+      community.general.ansible_galaxy_install:
+        type: role
+        name: robertdebock.cargo
+        dest: "{{ ansible_env.HOME }}/.ansible/roles"
+        force: true
+      when: install_cargo == 'y'
+      become: false
+
+    - name: Install xanmanning.k3s
+      community.general.ansible_galaxy_install:
+        type: role
+        name: xanmanning.k3s
+        dest: "{{ ansible_env.HOME }}/.ansible/roles"
+        force: true
+      when: install_k3s == 'y'
+      become: false
+
+    - name: Install Oh-My-Zsh if user selected yes
+      ansible.builtin.include_role:
+        name: viasite-ansible.zsh
+      when: install_zsh == 'y'
+
+    - name: Get the path of zsh
+      command: which zsh
+      register: zsh_path
+      changed_when: false
+      failed_when: zsh_path.rc != 0
+
+    - name: Change default shell if user selected yes and if zsh is not already set
+      user:
+        name: "{{ ansible_user_id }}"
+        shell: "{{ zsh_path.stdout }}"
+      when: ansible_env.SHELL != zsh_path.stdout and 
+
+    - name: Install Neovim
+      ansible.builtin.include_role:
+        name: neovim
+
+    - name: Apply WSL Clipboard Support if on WSL
+      ansible.builtin.include_role:
+        name: wsl_clipboard_support
+
+    - name: Apply Node.js role
+      ansible.builtin.include_role:
+        name: geerlingguy.nodejs
+      when: install_nodejs == 'y'
+
+    - name: Apply Tmux role
+      ansible.builtin.include_role:
+        name: tmux
+      when: install_tmux == 'y'
+
+
+    - name: Apply Go role
+      ansible.builtin.include_role:
+        name: geerlingguy.go
+      when: install_go == 'y'
+
+    - name: Apply Cargo role
+      ansible.builtin.include_role:
+        name: robertdebock.cargo
+      when: install_cargo == 'y'
+
+    - name: Apply Docker role
+      ansible.builtin.include_role:
+        name: geerlingguy.docker
+      when: install_docker == 'y'
+
+    - name: Apply K3s role
+      ansible.builtin.include_role:
+        name: xanmanning.k3s
+      when: install_k3s == 'y'
+
+    - name: Apply Conda role
+      ansible.builtin.include_role:
+        name: conda
+      when: install_conda == 'y'
+
+    - name: Apply R role
+      ansible.builtin.include_role:
+        name: r
+      when: install_r == 'y'
+
+    - name: Apply Stow role
+      ansible.builtin.include_role:
+        name: stow

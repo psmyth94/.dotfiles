@@ -16,16 +16,24 @@
   register: win32yank_stat
   when: is_wsl
 
-- name: Download and install win32yank
+- name: Download and extract win32yank
   ansible.builtin.unarchive:
     src: "https://github.com/equalsraf/win32yank/releases/download/v0.0.4/win32yank-x64.zip"
     dest: "/tmp"
     remote_src: true
     creates: "/tmp/win32yank.exe"
-  when: is_wsl and (not win32yank_stat.exists)
+  when: is_wsl and not win32yank_stat.stat.exists
 
 - name: Move win32yank into /usr/local/bin
-  ansible.builtin.command: mv /tmp/win32yank.exe /usr/local/bin/win32yank.exe
-  args:
-    creates: /usr/local/bin/win32yank.exe
-  when: is_wsl and (not win32yank_stat.exists)
+  ansible.builtin.copy:
+    src: /tmp/win32yank.exe
+    dest: /usr/local/bin/win32yank.exe
+    mode: '0755'
+    remote_src: true
+  when: is_wsl and not win32yank_stat.stat.exists
+
+- name: Remove temporary win32yank file
+  ansible.builtin.file:
+    path: /tmp/win32yank.exe
+    state: absent
+  when: is_wsl and win32yank_stat.stat.exists

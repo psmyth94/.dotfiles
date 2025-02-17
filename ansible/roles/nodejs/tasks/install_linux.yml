@@ -1,0 +1,56 @@
+---
+- name: Ensure curl is installed
+  ansible.builtin.package:
+    name: curl
+    state: present
+
+- name: Check if NVM is already installed
+  ansible.builtin.stat:
+    path: "{{ ansible_env.HOME }}/.nvm"
+  register: nvm_installed
+
+- name: Download NVM installation script
+  ansible.builtin.get_url:
+    url: "https://raw.githubusercontent.com/nvm-sh/nvm/master/install.sh"
+    dest: "/tmp/install_nvm.sh"
+    mode: '0755'
+  when: not nvm_installed.stat.exists
+
+- name: Install NVM
+  ansible.builtin.shell: |
+    set -o pipefail
+    /bin/bash /tmp/install_nvm.sh
+  args:
+    creates: "{{ ansible_env.HOME }}/.nvm"
+  when: not nvm_installed.stat.exists
+
+- name: Ensure NVM is sourced in {{ ansible_shell_type }}
+  ansible.builtin.lineinfile:
+    dest: "{{ ansible_env.HOME }}/.{{ ansible_shell_type }}rc"
+    line: "export NVM_DIR=\"$HOME/.nvm\" && source \"$NVM_DIR/nvm.sh\""
+    state: present
+  when: ansible_shell_type is defined
+
+- name: Source {{ ansible_shell_type }}
+  ansible.builtin.command: source {{ ansible_env.HOME }}/.{{ ansible_shell_type }}rc
+  changed_when: false
+
+- name: Install latest LTS Node.js using NVM
+  ansible.builtin.shell: |
+    set -o pipefail
+    nvm install --lts
+    nvm use --lts
+  args:
+    executable: /bin/bash
+  environment:
+    NVM_DIR: "{{ ansible_env.HOME }}/.nvm"
+  changed_when: true
+
+- name: Verify Node.js installation
+  ansible.builtin.command: "node -v"
+  register: node_version
+  changed_when: false
+
+- name: Display installed Node.js version
+  ansible.builtin.debug:
+    msg: "Installed Node.js version: {{ node_version.stdout }}"

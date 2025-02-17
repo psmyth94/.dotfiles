@@ -15,17 +15,10 @@
     state: present
   become: "{{ 'false' if ansible_pkg_mgr == 'homebrew' else 'true' }}"
 
-- name: Ensure dotfiles repository is cloned locally
-  ansible.builtin.git:
-    repo: "{{ dotfiles_repo }}"
-    dest: "{{ dotfiles_repo_local_destination }}"
-    version: "{{ dotfiles_repo_version }}"
-    accept_hostkey: "{{ dotfiles_repo_accept_hostkey }}"
-
 - name: Build directories list
   ansible.builtin.find:
     paths: ["{{ dotfiles_repo_local_destination }}"]
-    recurse: no
+    recurse: false
     file_type: directory
   register: files
 

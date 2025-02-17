@@ -1,0 +1,33 @@
+---
+- name: Check if NVM is already installed
+  ansible.windows.win_stat:
+    path: "{{ ansible_env.USERPROFILE }}\\AppData\\Roaming\\nvm"
+  register: nvm_installed_win
+
+- name: Download NVM installer
+  ansible.windows.win_get_url:
+    url: "https://raw.githubusercontent.com/coreybutler/nvm-windows/master/nvm-setup.exe"
+    dest: "{{ ansible_env.USERPROFILE }}\\nvm-setup.exe"
+  when: not nvm_installed_win.stat.exists
+
+- name: Install NVM (Windows)
+  ansible.windows.win_shell: |
+    Start-Process "{{ ansible_env.USERPROFILE }}\nvm-setup.exe" -ArgumentList "/S" -NoNewWindow -Wait
+  args:
+    executable: powershell.exe
+  when: not nvm_installed_win.stat.exists
+
+- name: Install latest LTS Node.js using NVM
+  ansible.windows.win_command: nvm install --lts
+
+- name: Use latest LTS Node.js as default
+  ansible.windows.win_command: nvm use --lts
+
+- name: Verify Node.js installation
+  ansible.windows.win_command: "node -v"
+  register: node_version
+  changed_when: false
+
+- name: Display installed Node.js version
+  ansible.builtin.debug:
+    msg: "Installed Node.js version: {{ node_version.stdout }}"
