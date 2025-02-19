@@ -9,16 +9,16 @@
       prompt: "Do you want to make Zsh the default shell ([y]/n)"
       private: false
       default: y
-    - name: install_zsh
+    - name: install_oh_my_zsh
       prompt: "Do you want to install Oh-My-Zsh? ([y]/n)"
       private: false
       default: y
-    - name: install_nodejs
-      prompt: "Do you want to install Node.js? ([y]/n)"
+    - name: install_tmux
+      prompt: "Do you want to install Tmux? ([y]/n)"
       private: false
       default: y
-    - name: install_tmux
-      prompt: "Do you want to install Tmux (Oh-My-Tmux)? ([y]/n)"
+    - name: install_oh_my_tmux
+      prompt: "Do you want to install Oh-My-Tmux? ([y]/n)"
       private: false
       default: y
     - name: install_docker
@@ -68,7 +68,7 @@
         name: viasite-ansible.zsh
         dest: "{{ ansible_user_dir }}/.ansible/roles"
         force: true
-      when: install_zsh == 'y'
+      when: install_oh_my_zsh == 'y'
 
     - name: Install robertdebock.cargo
       community.general.ansible_galaxy_install:
@@ -86,13 +86,24 @@
         force: true
       when: install_k3s == 'y'
 
-    - name: Install Oh-My-Zsh if user selected yes
+    - name: Install zsh without Oh-My-Zsh
       ansible.builtin.include_role:
         name: viasite-ansible.zsh
       vars:
         zsh_user: "{{ user_name }}"
         zsh_change_user_shell: true
-      when: install_zsh == 'y'
+        zsh_install_oh_my_zsh: false
+      when:
+        - default_zsh == 'y'
+        - install_oh_my_zsh == 'n'
+
+    - name: Install Oh-My-Zsh
+      ansible.builtin.include_role:
+        name: viasite-ansible.zsh
+      vars:
+        zsh_user: "{{ user_name }}"
+        zsh_change_user_shell: true
+      when: install_oh_my_zsh == 'y'
 
     - name: Install Neovim
       ansible.builtin.include_role:
@@ -109,7 +120,6 @@
         name: nodejs
       vars:
         nodejs_user: "{{ user_name }}"
-      when: install_nodejs == 'y'
 
     - name: Apply Tmux role
       ansible.builtin.include_role:
