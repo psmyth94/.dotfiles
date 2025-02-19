@@ -2,9 +2,8 @@
 ansible/*.retry
 ansible/*.log
 ansible/collections/
-ansible/roles/*/defaults/main.yml
 ansible/roles/*/vars/main.yml
-ansible/roles/*/defaults/main.yml
+ansible/vars/
 .ansible/
 
 # Temporary & Backup files

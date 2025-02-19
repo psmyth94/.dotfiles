@@ -4,7 +4,7 @@
     - tmux
     - install
 
-- include_tasks: configure.yml
+- include_tasks: post-install.yml
   tags:
     - tmux
     - configure
