@@ -1,8 +1,19 @@
 ---
-- name: Include Linux installation
-  ansible.builtin.import_tasks: install_linux.yml
+- ansible.builtin.include_tasks: install_linux.yml
   when: ansible_system != "Windows"
+  tags:
+    - nodejs
+    - install
+    - linux
 
-- name: Include Windows installation
-  ansible.builtin.import_tasks: install_windows.yml
+- ansible.builtin.include_tasks: install_windows.yml
   when: ansible_system == "Windows"
+  tags:
+    - nodejs
+    - install
+    - windows
+
+- ansible.builtin.include_tasks: configure.yml
+  tags:
+    - nodejs
+    - configure

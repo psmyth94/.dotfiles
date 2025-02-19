@@ -1,0 +1,15 @@
+export NVM_DIR="{'ansible_facts': {'getent_passwd': {'psmyth': ['x', '1000', '1000', ',,,', '/home/psmyth', '/bin/zsh']}}, 'failed': False, 'changed': False}"
+[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+
+export NVM_DIR="{'ansible_facts': {'getent_passwd': {'psmyth': ['x', '1000', '1000', ',,,', '/home/psmyth', '/bin/zsh']}}, 'failed': False, 'changed': False}"
+[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+
+export NVM_DIR="{'ansible_facts': {'getent_passwd': {'psmyth': ['x', '1000', '1000', ',,,', '/home/psmyth', '/bin/zsh']}}, 'failed': False, 'changed': False}"
+[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+
+export NVM_DIR="{'ansible_facts': {'getent_passwd': {'psmyth': ['x', '1000', '1000', ',,,', '/home/psmyth', '/bin/zsh']}}, 'failed': False, 'changed': False}"
+[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+
+export NVM_DIR="{'ansible_facts': {'getent_passwd': {'psmyth': ['x', '1000', '1000', ',,,', '/home/psmyth', '/bin/zsh']}}, 'failed': False, 'changed': False}"
+[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+

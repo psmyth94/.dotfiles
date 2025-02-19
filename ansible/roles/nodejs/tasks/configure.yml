@@ -1,0 +1,25 @@
+---
+- name: Get user's home directory (Linux/macOS)
+  getent:
+    database: passwd
+    key: "{{ nodejs_user }}"
+  register: nodejs_nvm_dir
+  when: ansible_system != "Windows"
+
+- name: Ensure NVM is loaded in the user shell startup file
+  become: true
+  ansible.builtin.lineinfile:
+    path: "{{ nodejs_shell_config }}"
+    create: true
+    line: |
+      export NVM_DIR="{{ nodejs_nvm_dir }}"
+      [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+    state: present
+    # Explicitly set permissions. This ensures the file has 0644.
+    mode: "0644"
+    # Ensure the file is owned by the correct user/group.
+    owner: "{{ nodejs_user }}"
+    group: "{{ nodejs_user_group }}"
+  register: _nvm_in_shell
+  # Mark changed only if a new line was actually inserted
+  changed_when: _nvm_in_shell.msg is defined and 'line added' in _nvm_in_shell.msg

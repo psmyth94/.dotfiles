@@ -1,35 +1,16 @@
 ---
-- name: Install tmux
-  ansible.builtin.apt:
-    name: tmux
-    state: present
-  when: ansible_os_family == "Debian"
+- include_tasks: install.yml
+  tags:
+    - tmux
+    - install
 
-- name: Symlink .tmux.conf
-  ansible.builtin.file:
-    src: "{{ tmux_dotfiles_dir }}/.tmux.conf"
-    dest: "{{ ansible_env.HOME }}/.tmux.conf"
-    state: link
-    force: true
+- include_tasks: configure.yml
+  tags:
+    - tmux
+    - configure
 
-- name: Clone Oh My Tmux
-  ansible.builtin.git:
-    repo: "https://github.com/gpakosz/.tmux.git"
-    dest: "{{ ansible_env.HOME }}/.oh-my-tmux"
-  when: install_oh_my_tmux | bool
-
-- name: Symlink oh-my-tmux config
-  ansible.builtin.file:
-    src: "{{ ansible_env.HOME }}/.oh-my-tmux/.tmux.conf"
-    dest: "{{ ansible_env.HOME }}/.tmux.conf"
-    state: link
-    force: true
-  when: install_oh_my_tmux | bool
-
-- name: Symlink local .tmux.conf
-  ansible.builtin.file:
-    src: "{{ tmux_dotfiles_dir }}/.tmux.conf.local"
-    dest: "{{ ansible_env.HOME }}/.tmux.conf.local"
-    state: link
-    force: true
-  when: install_oh_my_tmux | bool
+- include_tasks: source-for-users-shared.yml
+  tags:
+    - tmux
+    - install
+  when: tmux_shared and tmux_source_for_all_users

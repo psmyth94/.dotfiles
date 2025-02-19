@@ -1,0 +1,38 @@
+---
+- name: Get Ubuntu/Debian users's home path
+  ansible.builtin.shell: "egrep '^.*:.*:[1-9][0-9]{3,4}:.*:.*:.*:.*(bash|zsh)$' /etc/passwd | awk -F: '{print $6}'"
+  register: paths
+  when: ansible_os_family == 'Debian'
+  changed_when: false
+
+- name: Get Ubuntu/Debian users
+  ansible.builtin.shell: "egrep '^.*:.*:[1-9][0-9]{3,4}:.*:.*:.*:.*(bash|zsh)$' /etc/passwd | awk -F: '{print $1}'"
+  register: tmux_users
+  when: ansible_os_family == 'Debian' and paths is defined and paths.stdout != ""
+  changed_when: false
+
+- name: Format user list
+  ansible.builtin.set_fact:
+    tmux_list_users: "{{ ['root'] + tmux_users.stdout.splitlines() | list }}"
+  when: ansible_os_family == 'Debian' and paths is defined and paths.stdout != ""
+
+- name: Merge the users path and root/skel to list
+  ansible.builtin.set_fact:
+    allpaths: "{{ ['/root', '/etc/skel'] + paths.stdout.splitlines() | list }}"
+  when: tmux_shared and paths is defined and paths.stdout != ""
+
+- name: Use only root/skel for the list (no users found)
+  ansible.builtin.set_fact:
+    allpaths: "{{ ['/root', '/etc/skel'] }}"
+  when: paths is defined and paths.stdout == ""
+
+- name: Install .tmux.conf in {{ allpaths | join(',') }}
+  become: true
+  ansible.builtin.copy:
+    content: |
+      # For each user, we can just source the system-wide config
+      source {{ tmux_install_path }}/.tmux.conf
+    dest: "{{ item }}/.tmux.conf"
+    mode: '0644'
+  loop: "{{ allpaths }}"
+  when: allpaths is defined

@@ -19,4 +19,8 @@ fi
 
 # Run Ansible bootstrap playbook
 echo "Running Ansible playbook..."
-ANSIBLE_CONFIG="./ansbile/ansible.cfg" ansible-playbook "./ansible/bootstrap.yml"
+ANSIBLE_CONFIG="./ansible.cfg" \
+  ansible-playbook \
+  "./ansible/playbooks/install.yml" \
+  --ask-become-pass \
+  -e "user_name=$(whoami) user_home=$HOME"

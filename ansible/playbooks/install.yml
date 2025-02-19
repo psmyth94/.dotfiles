@@ -45,27 +45,14 @@
       prompt: "Do you want to install Conda? (y/[n])"
       private: false
       default: n
-  vars:
-    default_shell: "{{ lookup('ansible.builtin.env', 'SHELL') }}"
   tasks:
-    # DO NOT TOUCH THIS. YOU WANT IT EXACTLY AS IS.
     - name: Install geerlingguy.docker
       community.general.ansible_galaxy_install:
         type: role
         name: "geerlingguy.docker"
-        dest: "{{ ansible_env.HOME }}/.ansible/roles"
+        dest: "{{ ansible_user_dir }}/.ansible/roles"
         force: true
       when: install_docker == 'y'
-      become: false
-
-    - name: Install geerlingguy.nodejs
-      community.general.ansible_galaxy_install:
-        type: role
-        name: geerlingguy.nodejs
-        dest: "{{ ansible_env.HOME }}/.ansible/roles"
-        force: true
-      when: install_nodejs == 'y'
-      become: false
 
     - name: Install geerlingguy.go
       community.general.ansible_galaxy_install:
@@ -74,13 +61,12 @@
         dest: ~/.ansible/roles
         force: true
       when: install_go == 'y'
-      become: false
 
     - name: Install viasite-ansible.zsh
       community.general.ansible_galaxy_install:
         type: role
         name: viasite-ansible.zsh
-        dest: "{{ ansible_env.HOME }}/.ansible/roles"
+        dest: "{{ ansible_user_dir }}/.ansible/roles"
         force: true
       when: install_zsh == 'y'
 
@@ -88,40 +74,31 @@
       community.general.ansible_galaxy_install:
         type: role
         name: robertdebock.cargo
-        dest: "{{ ansible_env.HOME }}/.ansible/roles"
+        dest: "{{ ansible_user_dir }}/.ansible/roles"
         force: true
       when: install_cargo == 'y'
-      become: false
 
     - name: Install xanmanning.k3s
       community.general.ansible_galaxy_install:
         type: role
         name: xanmanning.k3s
-        dest: "{{ ansible_env.HOME }}/.ansible/roles"
+        dest: "{{ ansible_user_dir }}/.ansible/roles"
         force: true
       when: install_k3s == 'y'
-      become: false
 
     - name: Install Oh-My-Zsh if user selected yes
       ansible.builtin.include_role:
         name: viasite-ansible.zsh
+      vars:
+        zsh_user: "{{ user_name }}"
+        zsh_change_user_shell: true
       when: install_zsh == 'y'
-
-    - name: Get the path of zsh
-      command: which zsh
-      register: zsh_path
-      changed_when: false
-      failed_when: zsh_path.rc != 0
-
-    - name: Change default shell if user selected yes and if zsh is not already set
-      user:
-        name: "{{ ansible_user_id }}"
-        shell: "{{ zsh_path.stdout }}"
-      when: ansible_env.SHELL != zsh_path.stdout and 
 
     - name: Install Neovim
       ansible.builtin.include_role:
         name: neovim
+      vars:
+        neovim_user: "{{ user_name }}"
 
     - name: Apply WSL Clipboard Support if on WSL
       ansible.builtin.include_role:
@@ -129,14 +106,17 @@
 
     - name: Apply Node.js role
       ansible.builtin.include_role:
-        name: geerlingguy.nodejs
+        name: nodejs
+      vars:
+        nodejs_user: "{{ user_name }}"
       when: install_nodejs == 'y'
 
     - name: Apply Tmux role
       ansible.builtin.include_role:
         name: tmux
+      vars:
+        tmux_user: "{{ user_name }}"
       when: install_tmux == 'y'
-
 
     - name: Apply Go role
       ansible.builtin.include_role:

@@ -5,6 +5,7 @@ ansible/collections/
 ansible/roles/*/defaults/main.yml
 ansible/roles/*/vars/main.yml
 ansible/roles/*/defaults/main.yml
+.ansible/
 
 # Temporary & Backup files
 *.swp

@@ -1,0 +1,56 @@
+---
+- name: Update package cache
+  ansible.builtin.package:
+    update_cache: true
+    cache_valid_time: 86400
+  become: true
+  when: ansible_os_family != 'Darwin' and ansible_pkg_mgr != 'dnf'
+
+- name: Update package cache (dnf)
+  ansible.builtin.package:
+    update_cache: true
+  become: true
+  when: ansible_pkg_mgr == 'dnf'
+
+- name: Install tmux, git, etc.
+  ansible.builtin.package:
+    name:
+      - tmux
+      - git
+    state: present
+  become: true
+  when: ansible_os_family != 'Darwin'
+
+- name: Check if directory is empty
+  find:
+    paths: "{{ tmux_install_path }}"
+    hidden: true
+  register: dir_contents
+
+- name: Create directory for oh-my-tmux
+  ansible.builtin.file:
+    path: "{{ tmux_install_path }}"
+    state: directory
+    mode: '0755'
+    owner: "{{ tmux_user }}"
+    group: "{{ tmux_user_group }}"
+  become: true
+  become_user: "{{ tmux_user }}"
+  when:
+    - tmux_install_path is not none
+    - dir_contents.matched == 0
+
+
+- name: Clone oh-my-tmux repository
+  ansible.builtin.git:
+    repo: "{{ tmux_repo_url }}"
+    dest: "{{ tmux_install_path }}"
+    version: "{{ tmux_repo_version }}"
+    update: true
+    force: true
+  become: true
+  become_user: "{{ tmux_user }}"
+  register: tmux_register_clone
+  when: 
+    - tmux_install_path is not none
+    - dir_contents.matched == 0

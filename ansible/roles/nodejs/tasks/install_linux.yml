@@ -1,56 +1,88 @@
 ---
-- name: Ensure curl is installed
+- name: Ensure required packages are present
   ansible.builtin.package:
     name: curl
     state: present
+  become: true
+  when: ansible_os_family != "Darwin"
 
-- name: Check if NVM is already installed
-  ansible.builtin.stat:
-    path: "{{ ansible_env.HOME }}/.nvm"
-  register: nvm_installed
+- name: Get user's home directory (Linux/macOS) if not shared
+  getent:
+    database: passwd
+    key: "{{ nodejs_user }}"
+  register: user_passwd
+  when: not nodejs_shared
 
-- name: Download NVM installation script
-  ansible.builtin.get_url:
-    url: "https://raw.githubusercontent.com/nvm-sh/nvm/master/install.sh"
-    dest: "/tmp/install_nvm.sh"
+- name: Set `nvm_dir` based on `nodejs_shared`
+  set_fact:
+    nodejs_src_nvm: "source {{ nodejs_nvm_dir }}"
+    nvm_dir: >-
+      {% if nodejs_shared %}
+        {{ nodejs_nvm_dir }}
+      {% else %}
+        {{ user_passwd.ansible_facts.getent_passwd[nodejs_user][4] + '/.nvm' }}
+      {% endif %}
+
+- name: Ensure NVM directory exists
+  ansible.builtin.file:
+    path: "{{ nvm_dir }}"
+    state: directory
+    owner: "{{ 'root' if nodejs_shared else nodejs_user }}"
+    group: "{{ 'root' if nodejs_shared else nodejs_user_group }}"
     mode: '0755'
-  when: not nvm_installed.stat.exists
+  become: true
 
-- name: Install NVM
-  ansible.builtin.shell: |
-    set -o pipefail
-    /bin/bash /tmp/install_nvm.sh
-  args:
-    creates: "{{ ansible_env.HOME }}/.nvm"
-  when: not nvm_installed.stat.exists
-
-- name: Ensure NVM is sourced in {{ ansible_shell_type }}
-  ansible.builtin.lineinfile:
-    dest: "{{ ansible_env.HOME }}/.{{ ansible_shell_type }}rc"
-    line: "export NVM_DIR=\"$HOME/.nvm\" && source \"$NVM_DIR/nvm.sh\""
-    state: present
-  when: ansible_shell_type is defined
-
-- name: Source {{ ansible_shell_type }}
-  ansible.builtin.command: source {{ ansible_env.HOME }}/.{{ ansible_shell_type }}rc
-  changed_when: false
-
-- name: Install latest LTS Node.js using NVM
-  ansible.builtin.shell: |
-    set -o pipefail
-    nvm install --lts
-    nvm use --lts
+- name: Check if nvm is installed; if you see error, ignore it!
+  shell: "{{ nodejs_src_nvm }} && nvm -v"
   args:
     executable: /bin/bash
+  register: nvm_installed
+  ignore_errors: true
+  failed_when: false
+
+- name: Download NVM install script
+  ansible.builtin.get_url:
+    url: "{{ nodejs_nvm_install_url }}"
+    dest: "/tmp/nvm-install.sh"
+    mode: "0755"
+    force: true
+  become: true
+  become_user: "{{ nodejs_user }}"
+  when: nvm_installed.rc == 0 or nodejs_force_reinstall | default(false)
+
+- name: Run NVM install script
+  ansible.builtin.command: /tmp/nvm-install.sh
   environment:
-    NVM_DIR: "{{ ansible_env.HOME }}/.nvm"
-  changed_when: true
+    NVM_DIR: "{{ nvm_dir }}"
+  become: true
+  become_user: "{{ nodejs_user }}"
+  args:
+    creates: "{{ nvm_dir }}/nvm.sh"
+  when: not nvm_installed.rc == 0 or nodejs_force_reinstall | default(false)
 
-- name: Verify Node.js installation
-  ansible.builtin.command: "node -v"
-  register: node_version
+- name: Check if Node.js is installed
+  ansible.builtin.command: "{{ nodejs_src_nvm }} && command -v node || which node"
+  register: node_check
   changed_when: false
+  failed_when: false
 
-- name: Display installed Node.js version
+- name: Print Node.js status
   ansible.builtin.debug:
-    msg: "Installed Node.js version: {{ node_version.stdout }}"
+    msg: "Node.js is already installed at {{ node_check.stdout }}"
+  when: node_check.rc == 0
+
+- name: Install Node.js {{ nodejs_version }} with NVM
+  ansible.builtin.shell: |
+    {{ nodejs_src_nvm }} && 
+    nvm install {{ nodejs_version }} &&
+    nvm alias default {{ nodejs_version }} &&
+    nvm use default
+  args:
+    executable: /bin/bash
+  become: true
+  become_user: "{{ nodejs_user }}"
+  ignore_errors: true
+  failed_when: false
+  register: _node_install
+  changed_when: _node_install.rc == 0
+  when: node_check.rc != 0 or nodejs_force_reinstall | default(false)
