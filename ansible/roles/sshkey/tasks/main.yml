@@ -1,0 +1,27 @@
+---
+- name: Ensure .ssh directory exists
+  become: true
+  ansible.builtin.file:
+    dest: "{{ sshkey_dir }}"
+    mode: 0700
+    state: directory
+  tags:
+    - ssh
+
+- name: Install SSH key
+  become: true
+  ansible.builtin.copy:
+    src: "{{ sshkey_source_key }}"
+    dest: "{{ sshkey_dest_key }}"
+    mode: 0600
+  tags:
+    - ssh
+
+- name: Set authorized key
+  become: true
+  ansible.builtin.authorized_key:
+    user: "{{ sshkey_user }}"
+    state: present
+    key: "{{ sshkey_dest_key }}"
+  tags:
+    - ssh

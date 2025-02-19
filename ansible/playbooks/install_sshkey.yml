@@ -1,0 +1,11 @@
+---
+- name: Setup ssh key
+  hosts: localhost
+  become: true
+
+  roles:
+    - role: sshkey
+      vars:
+        sshkey_user: "{{ user_name }}"
+
+

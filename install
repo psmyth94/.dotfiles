@@ -1,12 +1,10 @@
 #!/usr/bin/env bash
 
-set -e # Exit immediately if a command exits with a non-zero status
+set -e
 
-# Ensure Ansible is installed
 if ! command -v ansible >/dev/null 2>&1; then
   echo "Ansible is not installed. Installing..."
   echo "Checking if pipx is installed..."
-  # install pipx inf not installed
   if ! command -v pipx >/dev/null 2>&1; then
     echo "pipx is not installed. Installing..."
     python3 -m pip install --user pipx
@@ -17,6 +15,18 @@ if ! command -v ansible >/dev/null 2>&1; then
   python3 -m pipx ensurepath
 fi
 
+mkdir -p ~/.ssh
+if [ ! -f ~/.dotfiles/ssh/id_rsa ]; then
+  ANSIBLE_CONFIG="./ansible.cfg" \
+    ansible-playbook \
+    "./ansible/playbooks/install_sshkey.yml" \
+    --ask-become-pass \
+    --ask-vault-pass \
+    -e "user_name=$(whoami)"
+else
+  echo "SSH key already exists. Skipping..."
+fi
+
 # Run Ansible bootstrap playbook
 echo "Running Ansible playbook..."
 ANSIBLE_CONFIG="./ansible.cfg" \
@@ -25,10 +35,5 @@ ANSIBLE_CONFIG="./ansible.cfg" \
   --ask-become-pass \
   -e "user_name=$(whoami) user_home=$HOME"
 
-mkdir -p ~/.ssh
-if [ ! -f ~/.dotfiles/.ssh/id_rsa ]; then
-  ansible-vault decrypt ~/.dotfiles/.ssh/id_rsa --output ~/.ssh/id_rsa
-  cp ~/.dotfiles/.ssh/id_rsa.pub
-  chmod 600 ~/.ssh/id_rsa
-  chmod 600 ~/.ssh/id_rsa.pub
-fi
+chmod +x ./decrypt_ssh_key
+./decrypt_ssh_key

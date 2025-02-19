@@ -25,9 +25,8 @@
       - gettext
       - cmake
       - g++
-      - pkg-config
-      - unzip
-      - ripgrep
+      - git
+      - ripgrep #
     state: present
   become: true
   when:
@@ -37,7 +36,7 @@
 - name: Check if Neovim source is already downloaded
   ansible.builtin.stat:
     path: "{{ nvim_source_path }}/.git"
-  register: nvim_git_folder
+  register: nvim_sshkey_folder
 
 - name: Clone Neovim repository
   ansible.builtin.git:
@@ -48,7 +47,7 @@
     force: "{{ force_build | default(false) }}"
   register: clone
   when:
-    - force_build | default(false) or not nvim_git_folder.stat.exists
+    - force_build | default(false) or not nvim_sshkey_folder.stat.exists
     - nvim_check.rc != 0 or force_build | default(false)
 
 - name: Ensure Neovim source directory has correct permissions

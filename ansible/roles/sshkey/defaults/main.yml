@@ -1,0 +1,7 @@
+---
+sshkey_user: "{{ ansible_user_id }}"
+sshkey_dotfiles_path: "~{{ sshkey_user }}/.dotfiles"
+sshkey_key_type: "id_rsa"
+sshkey_dir: "~{{ sshkey_user }}/.ssh"
+sshkey_source_key: "{{ sshkey_dotfiles_path }}/ssh/{{ sshkey_key_type }}"
+sshkey_dest_key: "{{ sshkey_dir }}/{{ sshkey_key_type }}"
