@@ -1,8 +1,0 @@
----
-neovim_user: "{{ ansible_user_id }}"
-neovim_shared: false
-neovim_source_path: >-
-  {{ '/usr/local/src/neovim' if neovim_shared else ('~' + neovim_user + '/src/neovim') }}
-neovim_owner: "{{ 'root' if neovim_shared else neovim_user }}"
-neovim_build_user: "{{ 'root' if neovim_shared else neovim_user }}"
-
