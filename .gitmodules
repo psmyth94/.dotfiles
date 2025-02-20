@@ -4,3 +4,4 @@
 [submodule "nvim"]
 	path = nvim
 	url = https://github.com/psmyth94/config-nvim.git
+	branch = main
