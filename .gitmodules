@@ -3,5 +3,5 @@
 	url = git@github.com:Azganoth/tree-sitter-lua.git
 [submodule "nvim"]
 	path = nvim
-	url = https://github.com/psmyth94/config-nvim.git
+	url = git@github.com:psmyth94/config-nvim.git
 	branch = main
