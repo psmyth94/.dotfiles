@@ -1,7 +1,7 @@
 [submodule "tree-sitter/.config/tree-sitter/tree-sitter-lua"]
 	path = tree-sitter/.config/tree-sitter/tree-sitter-lua
-	url = ssh://git@github.com:443/Azganoth/tree-sitter-lua.git
+	url = ssh://git@ssh.github.com:443/Azganoth/tree-sitter-lua
 [submodule "nvim"]
 	path = nvim
-	url = ssh://git@github.com:443/psmyth94/config-nvim.git
+	url = ssh://git@ssh.github.com:443/psmyth94/config-nvim
 	branch = main
