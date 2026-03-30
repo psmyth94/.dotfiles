@@ -1,4 +1,5 @@
 [submodule "nvim"]
 	path = nvim
-	url = ssh://git@ssh.github.com:443/psmyth94/config-nvim
+	; url = ssh://git@ssh.github.com:443/psmyth94/config-nvim
+	url = git@github.com:psmyth94/config-nvim
 	branch = main
