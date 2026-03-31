@@ -1,0 +1,16 @@
+{
+  "model": "us.anthropic.claude-opus-4-6-v1[1m]",
+  "statusLine": {
+    "type": "command",
+    "command": "bash /home/psmyth/.claude/statusline.sh"
+  },
+  "enabledPlugins": {
+    "pyright-lsp@claude-plugins-official": true,
+    "rust-analyzer-lsp@claude-plugins-official": true
+  },
+  "alwaysThinkingEnabled": true,
+  "effortLevel": "high",
+  "feedbackSurveyState": {
+    "lastShownTime": 1754063153540
+  }
+}
